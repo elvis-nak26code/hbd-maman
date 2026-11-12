@@ -38,6 +38,20 @@ tourne en boucle indéfiniment.
 > **au premier clic / toucher** sur la page (le clic sur l'enveloppe suffit), puis
 > un bouton en bas à droite permet de la couper ou de la remettre.
 
+Le site tente quand même un démarrage automatique au chargement. S'il est refusé,
+il réessaie à **chaque** geste (toucher, clic, clavier) jusqu'à ce que ça marche,
+et une pastille « Activer la musique » s'affiche à côté du bouton pour te le signaler.
+
+### Sur téléphone, je n'entends rien ?
+
+1. **Les navigateurs mobiles exigent un toucher** avant de jouer du son : touche
+   l'enveloppe (ou n'importe où sur la page), c'est ce geste qui lance la musique.
+2. Vérifie le **volume des médias** du téléphone.
+3. Sur iPhone, le **petit interrupteur silencieux** sur le côté coupe aussi le son
+   des pages web : désactive-le.
+4. Si tu as mis ta propre chanson et qu'elle ne charge pas (mauvais chemin après
+   l'hébergement), le site bascule tout seul sur la boîte à musique intégrée.
+
 ### Mettre ta propre chanson
 
 1. Dépose le fichier dans un dossier `public/`, par exemple `public/notre-chanson.mp3`.

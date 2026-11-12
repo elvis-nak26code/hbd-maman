@@ -1,7 +1,8 @@
 /**
  * Petit bouton flottant pour couper / remettre la musique.
+ * Affiche une invitation tant que la musique n'a pas démarré.
  */
-export default function MusicToggle({ playing, onToggle }) {
+export default function MusicToggle({ playing, showHint, onToggle }) {
   return (
     <button
       type="button"
@@ -12,6 +13,7 @@ export default function MusicToggle({ playing, onToggle }) {
       title={playing ? 'Couper la musique' : 'Lancer la musique'}
     >
       <span className="music-ring" aria-hidden="true" />
+      {showHint && <span className="music-label">Activer la musique</span>}
       {playing ? (
         <span className="equalizer" aria-hidden="true">
           <span />

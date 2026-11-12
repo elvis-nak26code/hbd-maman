@@ -3,6 +3,10 @@
  * Aucun fichier audio n'est nécessaire : la mélodie est jouée note par note.
  *
  * Si tu préfères ta propre chanson, regarde `src/config.js` (MUSIC_SRC).
+ *
+ * Note importante : sur mobile, les navigateurs n'autorisent le son qu'après
+ * une interaction de l'utilisateur. `start()` est donc appelé au chargement
+ * (tentative) puis à chaque geste jusqu'à ce que ça fonctionne.
  */
 
 const midiToFreq = (midi) => 440 * Math.pow(2, (midi - 69) / 12)
@@ -32,26 +36,41 @@ export class MusicBox {
     this.playing = false
     this.started = false
     this.starting = false
+    this.failed = false
     this.step = 0
     this.nextNoteTime = 0
   }
 
   init() {
     const Ctx = window.AudioContext || window.webkitAudioContext
-    if (!Ctx) return false
+    if (!Ctx) {
+      this.failed = true
+      return false
+    }
     const ctx = new Ctx()
     this.ctx = ctx
 
     const master = ctx.createGain()
-    master.gain.value = 0.0
-    master.connect(ctx.destination)
+    master.gain.value = 0.0001
+
+    // Compresseur : évite la saturation et rend le son plus présent
+    // sur les petits haut-parleurs de téléphone.
+    const comp = ctx.createDynamicsCompressor()
+    comp.threshold.value = -18
+    comp.knee.value = 24
+    comp.ratio.value = 3.5
+    comp.attack.value = 0.004
+    comp.release.value = 0.28
+
+    master.connect(comp)
+    comp.connect(ctx.destination)
     this.master = master
 
     // Réverbération artisanale (bruit qui s'éteint)
     const convolver = ctx.createConvolver()
     convolver.buffer = this.makeImpulse(ctx, 3.2, 2.6)
     const wet = ctx.createGain()
-    wet.gain.value = 0.55
+    wet.gain.value = 0.5
     convolver.connect(wet)
     wet.connect(master)
     this.reverb = convolver
@@ -74,7 +93,7 @@ export class MusicBox {
   }
 
   /** Note de boîte à musique : sinus + harmonique cristalline. */
-  bell(freq, time, gain = 0.075, dur = 2.6) {
+  bell(freq, time, gain = 0.1, dur = 2.6) {
     const ctx = this.ctx
     const out = ctx.createGain()
     out.gain.setValueAtTime(0.0001, time)
@@ -110,7 +129,7 @@ export class MusicBox {
   }
 
   /** Nappe discrète qui tient l'harmonie. */
-  pad(notes, time, dur, gain = 0.016) {
+  pad(notes, time, dur, gain = 0.02) {
     const ctx = this.ctx
     notes.forEach((midi, i) => {
       const osc = ctx.createOscillator()
@@ -145,7 +164,7 @@ export class MusicBox {
 
     const g = ctx.createGain()
     g.gain.setValueAtTime(0.0001, time)
-    g.gain.linearRampToValueAtTime(0.05, time + 0.05)
+    g.gain.linearRampToValueAtTime(0.075, time + 0.05)
     g.gain.exponentialRampToValueAtTime(0.0001, time + 2.4)
 
     osc.connect(g)
@@ -163,7 +182,7 @@ export class MusicBox {
 
     // Petite variation humaine pour ne pas être trop mécanique
     const human = 1 + (Math.random() - 0.5) * 0.004
-    const velocity = idx === 0 ? 0.085 : 0.055 + Math.random() * 0.015
+    const velocity = idx === 0 ? 0.12 : 0.085 + Math.random() * 0.02
     this.bell(midiToFreq(note) * human, time, velocity, 2.9)
 
     if (idx === 0) {
@@ -172,7 +191,7 @@ export class MusicBox {
     }
 
     if (SPARKLE_STEPS.has(step % 32)) {
-      this.bell(midiToFreq(chord.notes[3] + 12), time + EIGHTH * 0.5, 0.03, 3.4)
+      this.bell(midiToFreq(chord.notes[3] + 12), time + EIGHTH * 0.5, 0.045, 3.4)
     }
   }
 
@@ -185,31 +204,45 @@ export class MusicBox {
     }
   }
 
+  /** @returns {Promise<boolean>} true si la musique joue vraiment. */
   async start() {
-    if (this.playing || this.starting) return
-    if (!this.ctx && !this.init()) return
+    if (this.playing) return true
+    if (!this.ctx && !this.init()) return false
     const ctx = this.ctx
-    if (ctx.state === 'suspended') {
+
+    if (ctx.state !== 'running') {
+      if (this.starting) return false
       this.starting = true
+      let resumed = false
       try {
-        await ctx.resume()
-      } catch {
+        // Sur mobile, resume() peut rester en attente tant qu'il n'y a pas
+        // de geste. On ne bloque donc pas indéfiniment.
+        resumed = await Promise.race([
+          ctx
+            .resume()
+            .then(() => ctx.state === 'running')
+            .catch(() => false),
+          new Promise((resolve) => setTimeout(() => resolve(false), 900)),
+        ])
+      } finally {
         this.starting = false
-        return
       }
-      this.starting = false
+      if (!resumed) return false
     }
-    if (this.playing) return
+
+    if (this.playing) return true
+
     this.playing = true
     this.started = true
     this.step = 0
     this.nextNoteTime = ctx.currentTime + 0.1
     const now = ctx.currentTime
     this.master.gain.cancelScheduledValues(now)
-    this.master.gain.setValueAtTime(this.master.gain.value || 0.0001, now)
-    this.master.gain.linearRampToValueAtTime(0.9, now + 2.2)
+    this.master.gain.setValueAtTime(Math.max(this.master.gain.value, 0.0001), now)
+    this.master.gain.linearRampToValueAtTime(1, now + 0.7)
     this.schedule()
     this.timer = setInterval(this.schedule, 60)
+    return true
   }
 
   pause() {
@@ -240,25 +273,36 @@ export class MusicBox {
   }
 }
 
-/** Même boîte à musique, mais avec un fichier audio classique. */
+/** Même principe, mais avec un fichier audio classique. */
 export class FileMusic {
   constructor(src) {
-    this.audio = new Audio(src)
+    this.audio = new Audio()
     this.audio.loop = true
-    this.audio.volume = 0.65
+    this.audio.volume = 0.85
     this.audio.preload = 'auto'
+    this.audio.setAttribute('playsinline', '')
+    this.audio.playsInline = true
+    this.audio.src = src
     this.playing = false
     this.started = false
+    this.failed = false
+
+    this.audio.addEventListener('error', () => {
+      this.failed = true
+    })
   }
 
   async start() {
-    if (this.playing) return
+    if (this.playing) return true
+    if (this.failed) return false
     try {
       await this.audio.play()
       this.playing = true
       this.started = true
+      return true
     } catch {
       this.playing = false
+      return false
     }
   }
 

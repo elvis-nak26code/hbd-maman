@@ -787,6 +787,52 @@ button {
   opacity: 0.85;
 }
 
+.music-label {
+  position: absolute;
+  right: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  padding: 9px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(232, 200, 138, 0.4);
+  background: rgba(30, 10, 22, 0.78);
+  color: #f6e3bb;
+  font-family: 'Jost', system-ui, sans-serif;
+  font-size: 0.66rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  animation: labelIn 0.5s ease both;
+}
+
+.music-label::after {
+  content: '';
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  transform: rotate(45deg);
+  background: rgba(30, 10, 22, 0.78);
+  border-right: 1px solid rgba(232, 200, 138, 0.4);
+  border-top: 1px solid rgba(232, 200, 138, 0.4);
+}
+
+@keyframes labelIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
 .equalizer {
   display: flex;
   align-items: flex-end;

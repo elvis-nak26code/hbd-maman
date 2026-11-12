@@ -28,7 +28,11 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      <MusicToggle playing={music.playing} onToggle={music.toggle} />
+      <MusicToggle
+        playing={music.playing}
+        showHint={music.blocked}
+        onToggle={music.toggle}
+      />
     </div>
   )
 }
