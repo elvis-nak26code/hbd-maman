@@ -53,47 +53,69 @@ export class MusicBox {
     const master = ctx.createGain()
     master.gain.value = 0.0001
 
-    // Compresseur : évite la saturation et rend le son plus présent
-    // sur les petits haut-parleurs de téléphone.
+    // Compresseur doux : évite la saturation sur les petits haut-parleurs.
     const comp = ctx.createDynamicsCompressor()
-    comp.threshold.value = -18
-    comp.knee.value = 24
-    comp.ratio.value = 3.5
-    comp.attack.value = 0.004
-    comp.release.value = 0.28
+    comp.threshold.value = -20
+    comp.knee.value = 26
+    comp.ratio.value = 3
+    comp.attack.value = 0.006
+    comp.release.value = 0.3
+
+    // Limiteur final : plus aucun pic ne peut « cracher ».
+    const limiter = ctx.createDynamicsCompressor()
+    limiter.threshold.value = -3
+    limiter.knee.value = 0
+    limiter.ratio.value = 20
+    limiter.attack.value = 0.002
+    limiter.release.value = 0.16
 
     master.connect(comp)
-    comp.connect(ctx.destination)
+    comp.connect(limiter)
+    limiter.connect(ctx.destination)
     this.master = master
 
-    // Réverbération artisanale (bruit qui s'éteint)
-    const convolver = ctx.createConvolver()
-    convolver.buffer = this.makeImpulse(ctx, 3.2, 2.6)
-    const wet = ctx.createGain()
-    wet.gain.value = 0.5
-    convolver.connect(wet)
-    wet.connect(master)
-    this.reverb = convolver
+    // Réverbération légère : deux lignes à retard croisées.
+    // Beaucoup moins gourmand (et moins « métallique ») qu'un convolver,
+    // qui faisait saccader le son sur les téléphones modestes.
+    const revIn = ctx.createGain()
+    const revOut = ctx.createGain()
+    revOut.gain.value = 0.32
+
+    const d1 = ctx.createDelay(0.5)
+    d1.delayTime.value = 0.083
+    const d2 = ctx.createDelay(0.5)
+    d2.delayTime.value = 0.127
+
+    const lp1 = ctx.createBiquadFilter()
+    lp1.type = 'lowpass'
+    lp1.frequency.value = 2400
+    const lp2 = ctx.createBiquadFilter()
+    lp2.type = 'lowpass'
+    lp2.frequency.value = 1800
+
+    const fb1 = ctx.createGain()
+    fb1.gain.value = 0.3
+    const fb2 = ctx.createGain()
+    fb2.gain.value = 0.26
+
+    revIn.connect(d1)
+    d1.connect(lp1)
+    lp1.connect(fb1)
+    fb1.connect(d2)
+    d2.connect(lp2)
+    lp2.connect(fb2)
+    fb2.connect(d1)
+    lp1.connect(revOut)
+    lp2.connect(revOut)
+    revOut.connect(master)
+
+    this.reverb = revIn
 
     return true
   }
 
-  makeImpulse(ctx, seconds, decay) {
-    const rate = ctx.sampleRate
-    const length = Math.floor(rate * seconds)
-    const buffer = ctx.createBuffer(2, length, rate)
-    for (let ch = 0; ch < 2; ch++) {
-      const data = buffer.getChannelData(ch)
-      for (let i = 0; i < length; i++) {
-        const t = i / length
-        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, decay)
-      }
-    }
-    return buffer
-  }
-
   /** Note de boîte à musique : sinus + harmonique cristalline. */
-  bell(freq, time, gain = 0.1, dur = 2.6) {
+  bell(freq, time, gain = 0.1, dur = 2.2) {
     const ctx = this.ctx
     const out = ctx.createGain()
     out.gain.setValueAtTime(0.0001, time)
@@ -183,7 +205,7 @@ export class MusicBox {
     // Petite variation humaine pour ne pas être trop mécanique
     const human = 1 + (Math.random() - 0.5) * 0.004
     const velocity = idx === 0 ? 0.12 : 0.085 + Math.random() * 0.02
-    this.bell(midiToFreq(note) * human, time, velocity, 2.9)
+    this.bell(midiToFreq(note) * human, time, velocity, 2.4)
 
     if (idx === 0) {
       this.bass(midiToFreq(chord.bass), time)
@@ -191,7 +213,7 @@ export class MusicBox {
     }
 
     if (SPARKLE_STEPS.has(step % 32)) {
-      this.bell(midiToFreq(chord.notes[3] + 12), time + EIGHTH * 0.5, 0.045, 3.4)
+      this.bell(midiToFreq(chord.notes[3] + 12), time + EIGHTH * 0.5, 0.045, 2.8)
     }
   }
 
@@ -239,7 +261,7 @@ export class MusicBox {
     const now = ctx.currentTime
     this.master.gain.cancelScheduledValues(now)
     this.master.gain.setValueAtTime(Math.max(this.master.gain.value, 0.0001), now)
-    this.master.gain.linearRampToValueAtTime(1, now + 0.7)
+    this.master.gain.linearRampToValueAtTime(0.62, now + 0.5)
     this.schedule()
     this.timer = setInterval(this.schedule, 60)
     return true
@@ -278,7 +300,7 @@ export class FileMusic {
   constructor(src) {
     this.audio = new Audio()
     this.audio.loop = true
-    this.audio.volume = 0.85
+    this.audio.volume = 0.7
     this.audio.preload = 'auto'
     this.audio.setAttribute('playsinline', '')
     this.audio.playsInline = true

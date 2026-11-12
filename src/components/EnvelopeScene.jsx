@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react'
  * Un clic (ou Entrée) ouvre le rabat, la lettre se soulève, puis on
  * passe à la lettre complète.
  */
-export default function EnvelopeScene({ onOpen }) {
+export default function EnvelopeScene({ onOpen, onOpenStart }) {
   const [opening, setOpening] = useState(false)
   const [flapBack, setFlapBack] = useState(false)
   const timers = useRef([])
@@ -17,6 +17,9 @@ export default function EnvelopeScene({ onOpen }) {
 
   const handleOpen = () => {
     if (opening) return
+    // Démarre la musique immédiatement, dans le geste de l'utilisateur :
+    // c'est le moment où les navigateurs mobiles autorisent le son.
+    onOpenStart?.()
     setOpening(true)
     timers.current.push(setTimeout(() => setFlapBack(true), 420))
     timers.current.push(setTimeout(() => onOpen(), 1600))

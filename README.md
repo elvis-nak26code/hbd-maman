@@ -30,17 +30,23 @@ npm run preview   # teste la version finale
 
 ## La musique
 
-Par défaut, une **boîte à musique est générée en direct dans le navigateur**
-(Web Audio API) : aucune chanson à télécharger, aucun droit d'auteur, et elle
-tourne en boucle indéfiniment.
+Le site utilise par défaut **`public/musique.mp3`** : une boucle de boîte à
+musique de 30 secondes, douce et sans coupure (aucun droit d'auteur). C'est un
+vrai fichier audio, donc beaucoup plus fiable et plus léger pour le processeur
+d'un téléphone que la synthèse en direct.
 
 > Les navigateurs interdisent le son 100 % automatique. La musique démarre donc
-> **au premier clic / toucher** sur la page (le clic sur l'enveloppe suffit), puis
-> un bouton en bas à droite permet de la couper ou de la remettre.
+> **au premier clic / toucher** sur la page — et en particulier **au moment où
+> l'on touche l'enveloppe**, pour que le son et la lettre s'ouvrent ensemble.
+> Un bouton en bas à droite permet de la couper ou de la remettre.
 
 Le site tente quand même un démarrage automatique au chargement. S'il est refusé,
 il réessaie à **chaque** geste (toucher, clic, clavier) jusqu'à ce que ça marche,
 et une pastille « Activer la musique » s'affiche à côté du bouton pour te le signaler.
+
+Si le fichier MP3 est absent (mauvais chemin après hébergement), le site bascule
+tout seul sur une boîte à musique générée dans le navigateur (Web Audio).
+Pour revenir à cette version générée, mets `MUSIC_SRC = ''` dans `src/config.js`.
 
 ### Sur téléphone, je n'entends rien ?
 

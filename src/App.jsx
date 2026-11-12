@@ -24,7 +24,11 @@ export default function App() {
         {opened ? (
           <LetterScene key="letter" onReplay={() => setOpened(false)} />
         ) : (
-          <EnvelopeScene key="envelope" onOpen={() => setOpened(true)} />
+          <EnvelopeScene
+            key="envelope"
+            onOpen={() => setOpened(true)}
+            onOpenStart={music.start}
+          />
         )}
       </AnimatePresence>
 
