@@ -79,10 +79,40 @@ export default function EnvelopeScene({ onOpen, onOpenStart }) {
                 <span className="env-fold env-fold--right" />
                 <span className="env-fold env-fold--bottom" />
                 <span className="env-sheen" />
+                <span className="env-frame">
+                  <span className="env-frame-inner" />
+                </span>
+                <span className="env-date">
+                  <span className="env-date-rule" />
+                  Le 12 Novembre
+                  <span className="env-date-rule" />
+                </span>
               </div>
 
               <div className="env-flap" aria-hidden="true">
                 <span className="env-flap-shade" />
+                <span className="env-flap-lining">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 21s-7.2-4.5-9.4-8.6C.7 9.1 2.6 5.3 6.1 4.7c2-.3 3.9.7 4.9 2.4h2c1-1.7 2.9-2.7 4.9-2.4 3.5.6 5.4 4.4 3.5 7.7C19.2 16.5 12 21 12 21z" />
+                  </svg>
+                </span>
+                <svg
+                  className="env-flap-edge"
+                  viewBox="0 0 100 100"
+                  preserveAspectRatio="none"
+                >
+                  <path
+                    d="M1.6 0 L50 96.8 L98.4 0"
+                    fill="none"
+                    stroke="rgba(176, 133, 72, 0.5)"
+                    strokeWidth="1"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                </svg>
+                <span className="env-flap-note">
+                  <span className="env-flap-sender">Écrit par votre fils</span>
+                  <span className="env-flap-name">Elvis</span>
+                </span>
               </div>
 
               <span className="seal" aria-hidden="true">

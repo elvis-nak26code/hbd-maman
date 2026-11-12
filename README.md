@@ -81,9 +81,12 @@ src/
     LetterScene.jsx        # la lettre, les cœurs, les boutons
     MusicToggle.jsx        # bouton musique flottant
     Petals.jsx             # canvas de pétales / cœurs / poussière d'or
-  hooks/useMusic.js        # démarrage au premier geste
-  lib/music.js             # boîte à musique Web Audio
+  hooks/useMusic.js        # démarrage auto + au premier geste
+  lib/music.js             # lecture du MP3 + secours Web Audio
   styles/global.css        # toute la direction artistique
+
+public/
+  musique.mp3              # la boucle de boîte à musique (30 s)
 ```
 
 Bon anniversaire à ta maman. ❤️

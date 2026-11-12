@@ -300,7 +300,7 @@ export class FileMusic {
   constructor(src) {
     this.audio = new Audio()
     this.audio.loop = true
-    this.audio.volume = 0.7
+    this.audio.volume = 0.8
     this.audio.preload = 'auto'
     this.audio.setAttribute('playsinline', '')
     this.audio.playsInline = true
@@ -324,6 +324,9 @@ export class FileMusic {
       return true
     } catch {
       this.playing = false
+      // Fichier introuvable / illisible après hébergement : on le signale
+      // pour que useMusic bascule sur la boîte à musique intégrée.
+      if (this.audio.error) this.failed = true
       return false
     }
   }
